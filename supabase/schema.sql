@@ -112,7 +112,7 @@ create table if not exists semester_archives (
   created_at timestamptz not null default now()
 );
 
--- 2. TRIGGER DUKUNGAN PENDAFTARAN (PENTING)
+-- 2. TRIGGER DUKUNGAN PENDAFTARAN (FUNGSI UTAMA)
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
