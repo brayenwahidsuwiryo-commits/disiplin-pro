@@ -1,7 +1,29 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
 const cfg = window.APP_CONFIG || {};
-const sb = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+
+function validateSupabaseConfig() {
+    if (!cfg.supabaseUrl) {
+        throw new Error("Supabase URL belum diisi.");
+    }
+
+    if (!/^https?:\/\/.+/i.test(cfg.supabaseUrl)) {
+        throw new Error(
+            "Supabase URL tidak valid. Format harus https://xxxxx.supabase.co"
+        );
+    }
+
+    if (!cfg.supabaseAnonKey) {
+        throw new Error("Supabase Anon/Publishable Key belum diisi.");
+    }
+}
+
+validateSupabaseConfig();
+
+const sb = createClient(
+    cfg.supabaseUrl,
+    cfg.supabaseAnonKey
+);
 
 const state = { user:null, profile:null, school:null, page:"dashboard", students:[], violations:[], masters:{violations:[],achievements:[],sanctions:[]}, classes:[] };
 
