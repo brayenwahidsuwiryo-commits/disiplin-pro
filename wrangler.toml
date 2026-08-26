@@ -1,0 +1,5 @@
+# Cloudflare Pages dapat menggunakan folder ini sebagai static site.
+# Build command: (kosong)
+# Output directory: .
+name = "disiplin-pro-web"
+compatibility_date = "2026-08-26"

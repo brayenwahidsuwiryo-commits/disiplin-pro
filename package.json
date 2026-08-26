@@ -1,0 +1,10 @@
+{
+  "name": "disiplin-pro-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Disiplin Pro multi-school static web app",
+  "scripts": {
+    "dev": "python -m http.server 5500",
+    "start": "python -m http.server 5500"
+  }
+}
