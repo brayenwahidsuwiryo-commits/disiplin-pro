@@ -26,14 +26,14 @@
         <button class="auth-tab" data-auth-tab="register">Daftar Sekolah</button>
       </div>
 
-      <form id="loginForm" class="auth-form">
+      <form id="loginForm" class="auth-form hidden">
         <label>Email admin/kesiswaan<input id="loginEmail" type="email" required autocomplete="email"></label>
         <label>Password<input id="loginPassword" type="password" required autocomplete="current-password"></label>
         <button class="primary wide" type="submit">Masuk ke Sekolah</button>
         <p class="hint">Setiap akun terhubung ke satu sekolah.</p>
       </form>
 
-      <form id="registerForm" class="auth-form hidden">
+      <form id="registerForm" class="auth-form">
         <label>Nama sekolah<input id="regSchool" required placeholder="SMK Negeri ..."></label>
         <label>NPSN (opsional)<input id="regNpsn" placeholder="Contoh: 205xxxxx"></label>
         <label>Nama pengelola<input id="regName" required></label>
