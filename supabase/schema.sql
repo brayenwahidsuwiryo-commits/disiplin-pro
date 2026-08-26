@@ -1,5 +1,4 @@
--- DISIPLIN PRO WEB -- Schema Database Lengkap
-
+-- DISIPLIN PRO WEB -- Schema Database Lengkap (Fixed)
 create extension if not exists pgcrypto;
 
 -- 1. TABEL UTAMA
@@ -112,45 +111,56 @@ create table if not exists semester_archives (
   created_at timestamptz not null default now()
 );
 
+create index if not exists students_school_idx on students(school_id);
+create index if not exists students_class_idx on students(school_id,class_name);
+create index if not exists events_school_date_idx on discipline_events(school_id,event_date desc);
+create index if not exists events_student_idx on discipline_events(student_id);
+create index if not exists coaching_school_date_idx on coaching_records(school_id,coaching_date desc);
+
 -- 2. TRIGGER DUKUNGAN PENDAFTARAN (FUNGSI UTAMA)
 create or replace function public.handle_new_user()
-returns trigger
-language plpgsql
-security definer set search_path=public
+returns trigger language plpgsql security definer set search_path=public
 as $$
-declare
-  new_school uuid;
+declare new_school uuid;
 begin
-  insert into schools(name, npsn)
-  values (
-    coalesce(new.raw_user_meta_data->>'school_name', 'Sekolah Baru'),
-    nullif(new.raw_user_meta_data->>'npsn', '')
-  )
-  returning id into new_school;
+  insert into schools(name,npsn) values (
+    coalesce(new.raw_user_meta_data->>'school_name','Sekolah Baru'),
+    nullif(new.raw_user_meta_data->>'npsn','')
+  ) returning id into new_school;
 
-  insert into profiles(id, school_id, full_name, role)
-  values(
-    new.id,
-    new_school,
-    coalesce(new.raw_user_meta_data->>'full_name', 'Pengelola'),
-    'owner'
-  );
+  insert into profiles(id,school_id,full_name,role)
+  values(new.id,new_school,coalesce(new.raw_user_meta_data->>'full_name','Pengelola'),'owner');
+
+  insert into violation_types(school_id,code,name,category,points,description) values
+    (new_school,'P-101','Terlambat masuk sekolah','Kerajinan & Kehadiran',2,'Lewat bel masuk'),
+    (new_school,'P-102','Tidak masuk tanpa keterangan (alpa)','Kerajinan & Kehadiran',5,'Per hari'),
+    (new_school,'P-103','Membolos saat jam pelajaran','Kerajinan & Kehadiran',10,'Meninggalkan kelas tanpa izin'),
+    (new_school,'P-201','Tidak memakai atribut lengkap','Kerapian & Seragam',3,'Atribut tidak lengkap'),
+    (new_school,'P-407','Membuang sampah sembarangan','Kebersihan',3,'Tidak menjaga kebersihan');
+
+  insert into achievement_types(school_id,code,name,level,points,description) values
+    (new_school,'R-01','Juara 1 lomba tingkat sekolah','Sekolah',10,'Pengurang poin'),
+    (new_school,'R-02','Juara 2-3 lomba tingkat sekolah','Sekolah',7,'Pengurang poin'),
+    (new_school,'R-03','Juara lomba tingkat kecamatan','Kecamatan',15,'Pengurang poin');
+
+  insert into sanction_levels(school_id,level,points_from,points_to,action,executor) values
+    (new_school,1,0,9,'Pembinaan lisan','Wali Kelas'),
+    (new_school,2,10,24,'Teguran tertulis + panggilan siswa','Wali Kelas'),
+    (new_school,3,25,49,'Surat pemberitahuan ke orang tua','Guru BK'),
+    (new_school,4,50,74,'Panggilan orang tua ke sekolah','Guru BK + Wali Kelas'),
+    (new_school,5,75,null,'Penanganan lanjutan sesuai tata tertib sekolah','Tim Kesiswaan');
 
   return new;
 end $$;
 
 drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
+create trigger on_auth_user_created after insert on auth.users
+for each row execute procedure public.handle_new_user();
 
 -- 3. RLS POLICIES & SECURITY
 create or replace function public.my_school_id()
-returns uuid
-language sql stable security definer set search_path=public
-as $$
-  select school_id from public.profiles where id = auth.uid()
-$$;
+returns uuid language sql stable security definer set search_path=public
+as $$ select school_id from public.profiles where id=auth.uid() $$;
 
 alter table schools enable row level security;
 alter table profiles enable row level security;
@@ -173,13 +183,27 @@ drop policy if exists "events tenant" on discipline_events;
 drop policy if exists "coaching tenant" on coaching_records;
 drop policy if exists "archives tenant" on semester_archives;
 
-create policy "school own" on schools for select using (id = public.my_school_id());
-create policy "school update" on schools for update using (id = public.my_school_id());
-create policy "profile own" on profiles for select using (id = auth.uid());
-create policy "students tenant" on students for all using (school_id = public.my_school_id()) with check (school_id = public.my_school_id());
-create policy "violations tenant" on violation_types for all using (school_id = public.my_school_id()) with check (school_id = public.my_school_id());
-create policy "achievements tenant" on achievement_types for all using (school_id = public.my_school_id()) with check (school_id = public.my_school_id());
-create policy "sanctions tenant" on sanction_levels for all using (school_id = public.my_school_id()) with check (school_id = public.my_school_id());
-create policy "events tenant" on discipline_events for all using (school_id = public.my_school_id()) with check (school_id = public.my_school_id());
-create policy "coaching tenant" on coaching_records for all using (school_id = public.my_school_id()) with check (school_id = public.my_school_id());
-create policy "archives tenant" on semester_archives for all using (school_id = public.my_school_id()) with check (school_id = public.my_school_id());
+create policy "school own" on schools for select using (id=public.my_school_id());
+create policy "school update" on schools for update using (id=public.my_school_id());
+create policy "profile own" on profiles for select using (id=auth.uid());
+
+create policy "students tenant" on students for all using (school_id=public.my_school_id()) with check (school_id=public.my_school_id());
+create policy "violations tenant" on violation_types for all using (school_id=public.my_school_id()) with check (school_id=public.my_school_id());
+create policy "achievements tenant" on achievement_types for all using (school_id=public.my_school_id()) with check (school_id=public.my_school_id());
+create policy "sanctions tenant" on sanction_levels for all using (school_id=public.my_school_id()) with check (school_id=public.my_school_id());
+create policy "events tenant" on discipline_events for all using (school_id=public.my_school_id()) with check (school_id=public.my_school_id());
+create policy "coaching tenant" on coaching_records for all using (school_id=public.my_school_id()) with check (school_id=public.my_school_id());
+create policy "archives tenant" on semester_archives for all using (school_id=public.my_school_id()) with check (school_id=public.my_school_id());
+
+-- 4. VIEW SUMMARY (DENGAN SECURITY INVOKER UNTUK MENCEGAH CRASH)
+create or replace view student_point_summary 
+with (security_invoker = true) as
+select
+  s.id,s.school_id,s.nis,s.name,s.class_name,s.homeroom_teacher,s.status,
+  coalesce(sum(case when e.points > 0 then e.points else 0 end),0) as violation_points,
+  coalesce(sum(case when e.points < 0 then abs(e.points) else 0 end),0) as achievement_points,
+  greatest(coalesce(sum(e.points),0),0) as net_points,
+  count(e.id) as event_count
+from students s
+left join discipline_events e on e.student_id=s.id
+group by s.id;
