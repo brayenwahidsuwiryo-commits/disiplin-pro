@@ -68,5 +68,18 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script type="module" src="app.js"></script>
+  <script>
+    // app.js sebelumnya memiliki listener lama yang membaca data-tab,
+    // sementara tombol menggunakan data-auth-tab. Listener ini memastikan
+    // hasil akhirnya selalu mengikuti atribut yang benar.
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const target = tab.dataset.authTab === 'register' ? 'registerForm' : 'loginForm';
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.toggle('active', t === tab));
+        document.querySelectorAll('.auth-form').forEach(form => form.classList.add('hidden'));
+        document.getElementById(target)?.classList.remove('hidden');
+      });
+    });
+  </script>
 </body>
 </html>
