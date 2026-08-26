@@ -166,3 +166,14 @@ $("#settingsBtn").onclick=()=>{state.page="settings";renderNav();renderPage()};
 $("#menuBtn").onclick=()=>$(".sidebar").classList.toggle("open");
 sb.auth.onAuthStateChange(()=>loadContext());
 loadContext();
+
+document.querySelectorAll('.auth-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.auth-form').forEach(f => f.classList.add('hidden'));
+    
+    tab.classList.add('active');
+    const targetForm = tab.dataset.tab === 'register' ? 'registerForm' : 'loginForm';
+    document.getElementById(targetForm).classList.remove('hidden');
+  });
+});
