@@ -182,7 +182,81 @@ function bindPage(){const f={students:bindStudents,events:bindEvents,coaching:bi
 
 $$(".auth-tab").forEach(b=>b.onclick=()=>showAuth(b.dataset.authTab));
 $("#loginForm").onsubmit=async e=>{e.preventDefault();const {error}=await sb.auth.signInWithPassword({email:$("#loginEmail").value,password:$("#loginPassword").value});if(error)toast(error.message);else loadContext()};
-$("#registerForm").onsubmit=async e=>{e.preventDefault();const email=$("#regEmail").value,password=$("#regPassword").value,name=$("#regName").value,school=$("#regSchool").value,npsn=$("#regNpsn").value;const {data,error}=await sb.auth.signUp({email,password,options:{data:{full_name:name,school_name:school,npsn}}});if(error){toast(error.message);return}if(data.user){toast("Akun dibuat. Jika email verification aktif, cek email Anda lalu login.");}showAuth("login")};
+$("#registerForm").onsubmit = async (e) => {
+    e.preventDefault();
+
+    const button = e.target.querySelector("button[type='submit']");
+
+    const email = $("#regEmail").value.trim();
+    const password = $("#regPassword").value;
+    const name = $("#regName").value.trim();
+    const school = $("#regSchool").value.trim();
+    const npsn = $("#regNpsn").value.trim();
+
+    if (!school) {
+        toast("Nama sekolah wajib diisi.");
+        return;
+    }
+
+    if (!name) {
+        toast("Nama pengelola wajib diisi.");
+        return;
+    }
+
+    if (!email) {
+        toast("Email wajib diisi.");
+        return;
+    }
+
+    if (password.length < 8) {
+        toast("Password minimal 8 karakter.");
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Membuat akun...";
+
+    try {
+        const { data, error } = await sb.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    full_name: name,
+                    school_name: school,
+                    npsn: npsn || null
+                }
+            }
+        });
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data.user) {
+            throw new Error("Akun tidak berhasil dibuat.");
+        }
+
+        if (data.session) {
+            toast("Akun sekolah berhasil dibuat.");
+
+            await loadContext();
+        } else {
+            toast(
+                "Akun berhasil dibuat. Silakan cek email untuk verifikasi lalu login."
+            );
+
+            showAuth("login");
+        }
+
+    } catch (error) {
+        console.error("REGISTER ERROR:", error);
+        toast(error.message || "Pendaftaran gagal.");
+    } finally {
+        button.disabled = false;
+        button.textContent = "Buat Akun Sekolah";
+    }
+};
 $("#logoutBtn").onclick=async()=>{await sb.auth.signOut();state.user=null;showAuth()};
 $("#settingsBtn").onclick=()=>{state.page="settings";renderNav();renderPage()};
 $("#menuBtn").onclick=()=>$(".sidebar").classList.toggle("open");
