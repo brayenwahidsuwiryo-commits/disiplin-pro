@@ -1,4 +1,4 @@
--- DISIPLIN PRO — master kelas + unified pelanggaran/prestasi/sanksi
+-- DISIPLIN PRO — master kelas + unified pelanggaran/prestasi/sanksi + semester close
 -- Jalankan sekali di Supabase SQL Editor setelah schema.sql.
 
 alter table public.schools
@@ -40,6 +40,10 @@ alter table public.discipline_events
     or (event_type='prestasi' and violation_type_id is null and achievement_type_id is not null and sanction_level_id is null)
     or (event_type='sanksi' and violation_type_id is null and achievement_type_id is null and sanction_level_id is not null)
   );
+
+alter table public.semester_archives
+  add column if not exists snapshot jsonb not null default '{}'::jsonb,
+  add column if not exists closed_at timestamptz;
 
 create index if not exists events_type_idx
   on public.discipline_events(school_id,event_type,event_date desc);
