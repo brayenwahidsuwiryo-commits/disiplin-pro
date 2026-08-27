@@ -14,7 +14,7 @@
     <div class="auth-card">
       <div class="auth-tabs"><button class="auth-tab active" data-auth-tab="login">Login</button><button class="auth-tab" data-auth-tab="register">Daftar Sekolah</button></div>
       <form id="loginForm" class="auth-form"><label>Email admin/kesiswaan<input id="loginEmail" type="email" required autocomplete="email"></label><label>Password<input id="loginPassword" type="password" required autocomplete="current-password"></label><button class="primary wide" type="submit">Masuk ke Sekolah</button><p class="hint">Setiap akun terhubung ke satu sekolah.</p></form>
-      <form id="registerForm" class="auth-form hidden"><label>Nama sekolah<input id="regSchool" required placeholder="SMK Negeri ..."></label><label>NPSN (opsional)<input id="regNpsn" placeholder="Contoh: 205xxxxx"></label><label>Nama pengelola<input id="regName" required></label><label>Email login<input id="regEmail" type="email" required></label><label>Password<input id="regPassword" type="password" minlength="8" required></label><button class="primary wide" type="submit">Buat Akun Sekolah</button><p class="hint">Setelah daftar, akun dapat digunakan untuk mengelola data sekolah tersebut.</p></form>
+      <form id="registerForm" class="auth-form hidden"><label>Nama sekolah<input id="regSchool" required placeholder="SMK Negeri ..."></label><label>NPSN (opsional)<input id="regNpsn" placeholder="Contoh: 205xxxxx"></label><label>Nama pengelola<input id="regName" required></label><label>Email login<input id="regEmail" type="email" required></label><label>Password<input id="regPassword" type="password" minlength="8" required></label><button class="primary wide" type="submit">Buat Akun Sekolah</button><p class="hint">Akun baru otomatis dibuat sebagai pemilik sekolah. Jika akun email sudah pernah dibuat tetapi sekolahnya belum, proses ini akan memulihkan setup sekolah.</p></form>
     </div>
   </section>
   <section id="appView" class="app-shell hidden">
@@ -25,9 +25,11 @@
   <script src="config.js"></script>
   <script type="module" src="app.js"></script>
   <script src="auth-fix.js"></script>
+  <script src="registration-fix.js"></script>
   <script src="ui-overrides.js"></script>
   <script src="final-ui-fixes.js"></script>
   <script src="multi-session.js"></script>
   <script src="session-ui.js"></script>
+  <script src="navigation-ui-fix.js"></script>
 </body>
 </html>
