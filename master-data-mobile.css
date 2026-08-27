@@ -1,0 +1,33 @@
+/* Master Data: stable, document-like wrapping on mobile. */
+.dp-master-secondary-list{display:grid!important;grid-template-columns:1fr!important;gap:16px!important;margin-top:16px!important}
+.dp-master-secondary-list .dp-legacy-master-section{width:100%!important;min-width:0!important}
+.dp-vc-manager{width:100%;min-width:0;overflow:hidden}
+.dp-vc-list{display:grid;gap:14px}
+.vc-category{min-width:0;overflow:hidden}
+.vc-category-head{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+.vc-category-head>div:first-child{min-width:0;flex:1 1 auto}
+.vc-category-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto;white-space:nowrap}
+.vc-items{display:grid;gap:7px;margin-top:8px;min-width:0}
+.vc-item,.dp-vc-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:start;gap:10px;width:100%;min-width:0;padding:9px 0;border-bottom:1px dashed var(--line)}
+.vc-item-name{min-width:0;overflow-wrap:anywhere;word-break:normal;line-height:1.45}
+.vc-item-points{white-space:nowrap;align-self:start;font-weight:800;min-width:max-content}
+.vc-item-actions{display:flex;gap:5px;align-items:center;white-space:nowrap;flex:0 0 auto}
+.vc-item-actions button{padding:7px 9px}
+.dp-legacy-master-section .kpi-list{min-width:0}
+.dp-legacy-master-section .kpi-line{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:10px;min-width:0}
+.dp-legacy-master-section .kpi-line>span:first-child{min-width:0;overflow-wrap:anywhere;word-break:normal}
+.dp-legacy-master-section .kpi-line>span:last-child{white-space:nowrap;display:flex;align-items:center;gap:5px;flex:0 0 auto}
+@media(max-width:600px){
+  .dp-vc-manager{padding:14px}
+  .vc-category-head{gap:8px;align-items:flex-start}
+  .vc-category-actions{gap:4px}
+  .vc-category-actions button{padding:7px 8px;font-size:12px}
+  .vc-item,.dp-vc-row{grid-template-columns:minmax(0,1fr) auto auto;gap:7px;padding:9px 0}
+  .vc-item-name{font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+  .vc-item-points{font-size:12px;padding-top:1px}
+  .vc-item-actions{gap:3px}
+  .vc-item-actions button{width:auto!important;min-width:34px;padding:7px 8px;font-size:12px}
+  .dp-legacy-master-section .kpi-line{grid-template-columns:minmax(0,1fr) auto;gap:7px}
+  .dp-legacy-master-section .kpi-line>span:last-child{gap:3px}
+  .dp-legacy-master-section .kpi-line>span:last-child button{width:auto!important;min-width:34px;padding:7px 8px;font-size:12px}
+}
