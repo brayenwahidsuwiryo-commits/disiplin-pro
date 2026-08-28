@@ -1,0 +1,85 @@
+{
+  "prd": {
+    "metadata": {
+      "document_type": "Product Requirements Document",
+      "version": "2.1.0",
+      "status": "implementation_ready_blueprint",
+      "purpose": "Single source of truth untuk membangun sistem manajemen disiplin sekolah berbasis SaaS multi-tenant secara stabil, aman, konsisten, dan siap dijual ke banyak sekolah."
+    },
+    "implementation_note": "This file establishes PRD v2.1.0 as the canonical implementation blueprint. The existing production application is legacy and currently uses a different schema/model; implementation must therefore proceed incrementally with migrations and regression tests rather than a destructive rewrite.",
+    "source_of_truth": true,
+    "critical_requirements": {
+      "multi_tenancy": true,
+      "tenant_key": "school_id",
+      "tenant_isolation_backend_required": true,
+      "unlimited_active_sessions": true,
+      "max_active_devices": null,
+      "refresh_preserves_session": true,
+      "refresh_preserves_current_page": true,
+      "manual_logout_current_session_only": true,
+      "automatic_logout_inactivity_minutes": 10,
+      "automatic_logout_warning_seconds": 60,
+      "rbac": true,
+      "backend_authorization_required": true,
+      "audit": true,
+      "mobile_first": true,
+      "database_is_source_of_truth": true,
+      "no_dummy_data_when_actual_data_exists": true,
+      "no_infinite_loading": true,
+      "mutation_requires_backend_confirmation": true,
+      "preserve_history": true,
+      "import_must_resolve_students_classes_teachers_periods": true,
+      "dashboard_must_use_actual_tenant_data": true,
+      "point_calculation_from_confirmed_valid_violations": true,
+      "cancelled_violations_excluded_from_points": true
+    },
+    "required_entities": [
+      "schools", "users", "roles", "permissions", "user_roles", "role_permissions", "staff",
+      "academic_years", "semesters", "classes", "student_class_enrollments", "homeroom_assignments",
+      "students", "violation_categories", "violation_types", "violations", "violation_attachments",
+      "sanction_types", "violation_sanctions", "achievement_types", "student_achievements",
+      "document_templates", "document_template_versions", "generated_documents", "import_batches",
+      "import_rows", "plans", "subscriptions", "sessions", "audit_logs"
+    ],
+    "minimum_roles": ["Platform Super Admin", "Admin Sekolah", "Guru"],
+    "optional_roles": ["Guru BK", "Operator Sekolah", "Kepala Sekolah"],
+    "navigation": {
+      "unauthenticated": ["Login", "Daftar"],
+      "authenticated": ["Dashboard", "Data Siswa", "Data Kelas", "Guru/Staff", "Pelanggaran", "Sanksi", "Prestasi", "Master Data", "Laporan", "Dokumen/Surat", "Import/Export", "Audit/Aktivitas", "Pengaturan"],
+      "sidebar_before_auth": false,
+      "mobile_drawer": true,
+      "desktop_sidebar_persistent": true
+    },
+    "implementation_phases": [
+      {"phase": 0, "name": "Foundation & SaaS Architecture"},
+      {"phase": 1, "name": "Master & Academic Data"},
+      {"phase": 2, "name": "Discipline Operations"},
+      {"phase": 3, "name": "Dashboard & Reports"},
+      {"phase": 4, "name": "Documents"},
+      {"phase": 5, "name": "Commercial Platform"},
+      {"phase": 6, "name": "Hardening & Release"}
+    ],
+    "quality_gate": {
+      "zero_known_critical_bugs": true,
+      "critical_e2e_required": true,
+      "tenant_isolation_tests_required": true,
+      "rbac_tests_required": true,
+      "import_consistency_tests_required": true,
+      "point_calculation_tests_required": true,
+      "backup_restore_test_required": true,
+      "responsive_qa_required": true,
+      "regression_suite_required": true,
+      "production_monitoring_required": true
+    },
+    "engineering_guardrails": [
+      "Fix smallest responsible scope.",
+      "Jangan refactor modul stabil tanpa alasan teknis yang terukur.",
+      "Setiap perubahan schema harus memiliki migration.",
+      "Setiap perubahan bisnis penting harus memiliki automated test.",
+      "Jangan menyimpan state operasional penting hanya di frontend.",
+      "Jangan merge perubahan yang membuat test core gagal.",
+      "Bug data integrity, tenant isolation, auth, dan permission dianggap severity tinggi atau kritis.",
+      "Perubahan lintas modul wajib regression test."
+    ]
+  }
+}
