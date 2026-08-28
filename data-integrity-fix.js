@@ -6,23 +6,30 @@
   const norm = v => clean(v).toLowerCase().replace(/\s+/g, ' ');
   const toast = msg => { const t=document.querySelector('#toast'); if(!t)return; t.textContent=msg; t.classList.add('show'); clearTimeout(window.__dpIntegrityToast); window.__dpIntegrityToast=setTimeout(()=>t.classList.remove('show'),4200); };
   async function schoolId(){ const {data:{user}}=await db.auth.getUser(); if(!user) throw Error('Sesi login tidak ditemukan.'); const {data,error}=await db.from('profiles').select('school_id').eq('id',user.id).single(); if(error||!data?.school_id) throw Error('Sekolah akun belum ditemukan.'); return data.school_id; }
-  async function syncClasses(){
+  async function syncClasses({notify=false}={}){
     const sid=await schoolId();
     const {data:students,error}=await db.from('students').select('class_name,homeroom_teacher').eq('school_id',sid).not('class_name','is',null);
     if(error) throw error;
     const {data:school,error:se}=await db.from('schools').select('settings').eq('id',sid).single(); if(se) throw se;
-    const settings={...(school?.settings||{})}; const current=Array.isArray(settings.classes)?settings.classes:[]; const map=new Map(current.map(c=>[norm(c?.name),{name:clean(c?.name),homeroom_teacher:clean(c?.homeroom_teacher||'')}]).filter(([k])=>k));
-    (students||[]).forEach(s=>{const name=clean(s.class_name);if(!name)return;const k=norm(name),old=map.get(k)||{name,homeroom_teacher:''};if(clean(s.homeroom_teacher))old.homeroom_teacher=clean(s.homeroom_teacher);map.set(k,old)});
-    settings.classes=[...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'id'));
-    const {error:ue}=await db.from('schools').update({settings}).eq('id',sid); if(ue) throw ue;
-    return settings.classes.length;
+    const settings={...(school?.settings||{})};
+    const current=Array.isArray(settings.classes)?settings.classes:[];
+    const map=new Map(current.map(c=>[norm(c?.name),{...c,name:clean(c?.name),homeroom_teacher:clean(c?.homeroom_teacher||c?.wali_kelas||'')}]).filter(([k])=>k));
+    (students||[]).forEach(s=>{const name=clean(s.class_name);if(!name)return;const k=norm(name),old=map.get(k)||{name,homeroom_teacher:''};if(clean(s.homeroom_teacher))old.homeroom_teacher=clean(s.homeroom_teacher);old.wali_kelas=old.homeroom_teacher;map.set(k,old)});
+    const classes=[...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'id'));
+    const oldJson=JSON.stringify(current.map(c=>({name:clean(c?.name),homeroom_teacher:clean(c?.homeroom_teacher||c?.wali_kelas||'')})).sort((a,b)=>a.name.localeCompare(b.name,'id')));
+    const newJson=JSON.stringify(classes.map(c=>({name:c.name,homeroom_teacher:clean(c.homeroom_teacher||c.wali_kelas||'')})));
+    if(oldJson!==newJson){settings.classes=classes;const {error:ue}=await db.from('schools').update({settings}).eq('id',sid);if(ue)throw ue;}
+    if(notify)toast(`Master Kelas tersinkron: ${classes.length} kelas.`);
+    return classes.length;
   }
   async function ensureCategory(sid,name){
     name=clean(name)||'Lain-lain'; const {data,error}=await db.from('violation_categories').select('*').eq('school_id',sid).ilike('name',name).limit(1); if(error)throw error; if(data?.[0])return data[0];
     const {data:created,error:ce}=await db.from('violation_categories').insert({school_id:sid,name,points_from:0,points_to:null,active:true}).select().single(); if(ce)throw ce; return created;
   }
   async function ensureViolation(sid,name,category,points){
-    name=clean(name); if(!name)return null; const {data,error}=await db.from('violation_types').select('*').eq('school_id',sid).ilike('name',name).limit(1); if(error)throw error; if(data?.[0])return data[0];
+    name=clean(name); if(!name)return null; const {data,error}=await db.from('violation_types').select('*').eq('school_id',sid).ilike('name',name).limit(1); if(error)throw error; if(data?.[0]){
+      const v=data[0]; const cat=await ensureCategory(sid,category||v.category); if(norm(v.category)!==norm(cat.name)){const{data:updated,error:ue}=await db.from('violation_types').update({category:cat.name}).eq('id',v.id).select().single();if(ue)throw ue;return updated;} return v;
+    }
     const cat=await ensureCategory(sid,category); const code='IMP-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,7).toUpperCase(); const {data:created,error:ce}=await db.from('violation_types').insert({school_id:sid,code,name,category:cat.name,points:Number.isFinite(points)?Math.abs(points):0,description:'Dibuat otomatis dari import Excel',active:true}).select().single(); if(ce)throw ce; return created;
   }
   async function importIncidents(file){
@@ -39,8 +46,8 @@
     }
     for(let i=0;i<rows.length;i+=100){const {error}=await db.from('discipline_events').insert(rows.slice(i,i+100));if(error)throw error;} return rows.length;
   }
-  document.addEventListener('dp:students-imported',async()=>{try{const n=await syncClasses();toast(`Import siswa selesai. ${n} kelas/wali kelas disinkronkan ke Master Kelas.`);document.body.appendChild(document.createComment('classes-synced'));}catch(e){console.error(e);toast('Siswa masuk, tetapi sinkronisasi Master Kelas gagal: '+e.message);}},false);
-  document.addEventListener('change',async e=>{if(e.target?.id!=='incidentExcelImport')return;e.stopImmediatePropagation();e.preventDefault();const f=e.target.files?.[0];if(!f)return;try{toast('Mengimpor catatan dan membuat master pelanggaran/kategori yang belum ada...');const n=await importIncidents(f);toast(`Berhasil: ${n} catatan masuk. Master pelanggaran/kategori otomatis disesuaikan.`);document.dispatchEvent(new CustomEvent('dp:incidents-imported',{detail:{rows:n}}));document.body.appendChild(document.createComment('incidents-synced'));}catch(err){console.error(err);toast(err?.message||'Import catatan gagal.')}finally{e.target.value=''}},true);
+  document.addEventListener('dp:students-imported',async()=>{try{await syncClasses()}catch(e){console.error(e);toast('Siswa masuk, tetapi sinkronisasi Master Kelas gagal: '+e.message);}},false);
+  document.addEventListener('change',async e=>{if(e.target?.id!=='incidentExcelImport')return;e.stopImmediatePropagation();const f=e.target.files?.[0];if(!f)return;try{toast('Mengimpor catatan dan membuat master pelanggaran/kategori yang belum ada...');const n=await importIncidents(f);toast(`Berhasil: ${n} catatan masuk. Master pelanggaran/kategori otomatis disesuaikan.`);document.dispatchEvent(new CustomEvent('dp:incidents-imported',{detail:{rows:n}}));document.dispatchEvent(new CustomEvent('dp:master-data-changed',{detail:{source:'incident-import',rows:n}}));}catch(err){console.error(err);toast(err?.message||'Import catatan gagal.')}finally{e.target.value=''}},true);
   window.DisiplinProIntegrity={syncClasses,importIncidents};
   window.addEventListener('load',async()=>{try{await syncClasses()}catch(e){console.debug('initial class sync skipped',e)}},{once:true});
 })();
