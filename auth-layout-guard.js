@@ -1,6 +1,6 @@
-// Keep authentication screens completely isolated from the dashboard shell.
-// The sidebar/top navigation belongs only to #appView and must never appear
-// while Login / Daftar Sekolah is visible.
+// Auth pages are a completely separate shell from the dashboard.
+// IMPORTANT: hide #appView with an inline style as well as the class so
+// later CSS/JS cannot accidentally make the dashboard/sidebar visible.
 (() => {
   const AUTH = '#authView';
   const APP = '#appView';
@@ -14,18 +14,29 @@
 
     syncing = true;
     const authVisible = !auth.classList.contains('hidden');
-    const appVisible = !app.classList.contains('hidden');
 
     if (authVisible) {
       app.classList.add('hidden');
       app.setAttribute('aria-hidden', 'true');
-    } else if (appVisible) {
-      auth.classList.add('hidden');
-      auth.setAttribute('aria-hidden', 'true');
+      app.style.setProperty('display', 'none', 'important');
+      app.style.setProperty('visibility', 'hidden', 'important');
+      app.style.setProperty('pointer-events', 'none', 'important');
+    } else {
+      app.classList.remove('hidden');
+      app.removeAttribute('aria-hidden');
+      app.style.removeProperty('display');
+      app.style.removeProperty('visibility');
+      app.style.removeProperty('pointer-events');
     }
 
-    if (!authVisible) auth.removeAttribute('aria-hidden');
-    if (!appVisible) app.removeAttribute('aria-hidden');
+    if (authVisible) {
+      auth.removeAttribute('aria-hidden');
+      auth.style.removeProperty('display');
+    } else {
+      auth.classList.add('hidden');
+      auth.setAttribute('aria-hidden', 'true');
+      auth.style.setProperty('display', 'none', 'important');
+    }
     syncing = false;
   }
 
@@ -36,7 +47,7 @@
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ['class']
+      attributeFilter: ['class', 'style']
     });
     window.addEventListener('pageshow', syncAuthLayout);
   }
